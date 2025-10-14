@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+alembic
+psycopg2
+psycopg2-binary
+pydantic
+pydantic-settings
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+youtube-transcript-api
+openai
+anthropic
+python-dotenv
+httpx
