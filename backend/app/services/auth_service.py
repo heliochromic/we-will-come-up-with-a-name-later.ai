@@ -1,2 +1,0 @@
-class AuthService(BaseService):
-    pass
