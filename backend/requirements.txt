@@ -1,7 +1,6 @@
 fastapi
 uvicorn[standard]
 alembic
-psycopg2
 psycopg2-binary
 pydantic
 pydantic-settings
