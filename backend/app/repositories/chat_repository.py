@@ -1,7 +1,7 @@
 from typing import List
 
 from app.models.chat import Chat
-from base import BaseRepository
+from app.repositories.base import BaseRepository
 
 
 class ChatRepository(BaseRepository):
