@@ -6,7 +6,7 @@ import os
 
 load_dotenv()
 
-DATABASE_URL = f"postgresql://{os.getenv("user")}:{os.getenv("password")}@{os.getenv("host")}:{os.getenv("port")}/{os.getenv("dbname")}"
+DATABASE_URL = f"postgresql://{os.getenv('user')}:{os.getenv('password')}@{os.getenv('host')}:{os.getenv('port')}/{os.getenv('dbname')}"
 
 engine = create_engine(DATABASE_URL)
 
