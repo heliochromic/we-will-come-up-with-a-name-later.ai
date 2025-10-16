@@ -1,14 +1,27 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional
+from datetime import datetime
+from uuid import UUID
+from app.models.user import GenderEnum
 
 
 class UserBase(BaseModel):
-    pass
+    name: str
+    email: EmailStr
+    age: Optional[int] = None
+    gender: Optional[GenderEnum] = None
+    birth_date: Optional[datetime] = None
 
 
 class UserCreate(UserBase):
-    pass
+    password: str
+
 
 
 class UserResponse(UserBase):
-    pass
+    user_id: UUID
+    is_admin: bool
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
