@@ -1,7 +1,7 @@
-from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, List, Optional
-from sqlalchemy.orm import Session
+from app.repositories.base import BaseRepository
 
 
 class UserRepository(BaseRepository):
-    pass
+    def get_by_email(self, email: str):
+        return self.db.query(self.model).filter(self.model.email.is_(email)).first()
+
