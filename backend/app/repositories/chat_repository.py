@@ -1,8 +1,9 @@
-from typing import List, Optional
-from sqlalchemy.orm import Session
+from typing import List
 
+from app.models.chat import Chat
 from base import BaseRepository
 
 
 class ChatRepository(BaseRepository):
-    pass
+    def get_by_user_id(self, user_id: str) -> List[Chat]:
+        return self.db.query(self.model).filter(self.model.user_id.is_(user_id)).all()

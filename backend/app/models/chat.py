@@ -12,6 +12,7 @@ class Chat(Base):
     chat_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     transcript_id = Column(UUID(as_uuid=True), ForeignKey("transcripts.transcript_id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="SET NULL"), nullable=True)
 
     messages = relationship("Message", back_populates="chat", cascade="all, delete-orphan")
     transcript = relationship("Transcript", backref="chats")
