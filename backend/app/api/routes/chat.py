@@ -7,6 +7,7 @@ from app.core.database import SessionLocal
 from app.schemas.chat import ChatCreate, ChatResponse, MessageCreate, MessageResponse, LLMRequestSchema, LLMResponseSchema
 from app.schemas.user import UserResponse
 from app.services.chat import chat_service
+from app.services.llm import llm_service
 from app.api.routes.user import get_current_user
 
 router = APIRouter(prefix="/api/chats", tags=["chats"])
@@ -198,6 +199,13 @@ async def send_message_to_llm(
         )
 
     try:
+        chat = chat_service.get_chat_with_messages(db, chat_id)
+
+        if not chat:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Chat not found"
+            )
 
         chat_service.add_message(
             db,
@@ -206,7 +214,18 @@ async def send_message_to_llm(
             message_text=request.user_message
         )
 
-        llm_response_text = "This is a placeholder LLM response. Integrate with actual LLM service."
+        system_prompt = "You are a helpful AI assistant that helps users understand and discuss content from YouTube videos. Be concise, informative, and friendly."
+
+        messages = llm_service.format_chat_history(
+            chat_messages=chat.messages,
+            new_user_message=request.user_message,
+            system_prompt=system_prompt
+        )
+
+        llm_response_text = llm_service.generate_response(
+            provider=request.provider,
+            messages=messages
+        )
 
         chat_service.add_message(
             db,

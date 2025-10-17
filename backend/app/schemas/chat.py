@@ -36,6 +36,7 @@ class ChatResponse(ChatBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class LLMRequestSchema(BaseModel):
     chat_id: UUID
     user_message: str
