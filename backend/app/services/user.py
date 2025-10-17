@@ -53,6 +53,7 @@ class UserService(BaseService[User, UserRepository]):
         user = User(
             name=user_data.name,
             email=user_data.email,
+            hashed_password=hashed_password,
             age=user_data.age,
             gender=user_data.gender,
             birth_date=user_data.birth_date,
@@ -69,6 +70,9 @@ class UserService(BaseService[User, UserRepository]):
     def authenticate_user(self, db: Session, email: str, password: str) -> Optional[User]:
         user = self.get_by_email(db, email)
         if not user:
+            return None
+
+        if not self.verify_password(password, user.hashed_password):
             return None
 
         return user

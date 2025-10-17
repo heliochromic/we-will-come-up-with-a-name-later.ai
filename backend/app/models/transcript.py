@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, DateTime, Float, JSON, func, Index
+from sqlalchemy import Column, String, Text, DateTime, Float, JSON, func
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
@@ -15,10 +15,6 @@ class Transcript(Base):
     duration = Column(Float, nullable=True)
     # metadata = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    __table_args__ = (
-        Index("ix_transcripts_video_url", "video_url"),
-    )
 
     def __repr__(self):
         return (
