@@ -73,25 +73,20 @@ class TranscriptService(BaseService[Transcript, TranscriptRepository]):
         try:
             video_id = self._extract_video_id(url)
 
-            transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+            ytt_api = YouTubeTranscriptApi()
 
-            transcript_text = " ".join([entry['text']
-                                       for entry in transcript_list])
+            transcript_data = ytt_api.fetch(video_id, languages=['en'])
+
+            transcript_text = " ".join(
+                [entry.text for entry in transcript_data.snippets])
 
             duration = None
-            if transcript_list:
-                last_entry = transcript_list[-1]
-                duration = last_entry['start'] + last_entry['duration']
+            if transcript_data.snippets:
+                last_entry = transcript_data.snippets[-1]
+                duration = last_entry.start + last_entry.duration
 
-            language = 'en'
-            try:
-                transcript_info = YouTubeTranscriptApi.list_transcripts(
-                    video_id)
-                available_transcripts = list(transcript_info)
-                if available_transcripts:
-                    language = available_transcripts[0].language_code
-            except Exception:
-                pass
+            language = transcript_data.language_code if hasattr(
+                transcript_data, 'language_code') else 'en'
 
             return {
                 'transcript_text': transcript_text,

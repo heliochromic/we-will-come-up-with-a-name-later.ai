@@ -1,4 +1,4 @@
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, ConfigDict
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
@@ -22,5 +22,4 @@ class TranscriptResponse(TranscriptBase):
     transcript_id: UUID
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

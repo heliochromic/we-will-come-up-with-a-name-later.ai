@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
@@ -18,8 +18,7 @@ class MessageResponse(MessageBase):
     chat_id: UUID
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ChatBase(BaseModel):
@@ -35,8 +34,8 @@ class ChatResponse(ChatBase):
     created_at: datetime
     messages: list[MessageResponse] = []
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class LLMRequestSchema(BaseModel):
     chat_id: UUID

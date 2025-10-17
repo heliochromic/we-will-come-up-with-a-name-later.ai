@@ -1,31 +1,35 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.config import settings
+from app.api.routes import user, chat, transcription
+
 app = FastAPI(
-    title="YouTube LLM Agent API",
-    version="1.0.0"
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
+    description="YouTube LLM Agent API for transcribing videos and chatting with AI about them"
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# auth_router = APIRouter(prefix="/api/auth", tags=["auth"])
-# transcript_router = APIRouter(prefix="/api/transcripts", tags=["transcripts"])
-# chat_router = APIRouter(prefix="/api/chats", tags=["chats"])
-
-# app.include_router(auth_router)
-# app.include_router(transcript_router)
-# app.include_router(chat_router)
+app.include_router(user.router)
+app.include_router(chat.router)
+app.include_router(transcription.router)
 
 
 @app.get("/")
 def root():
-    return {"message": "YouTube LLM Agent API"}
+    return {
+        "message": "YouTube LLM Agent API",
+        "version": settings.APP_VERSION,
+        "docs": "/docs"
+    }
 
 
 @app.get("/health")

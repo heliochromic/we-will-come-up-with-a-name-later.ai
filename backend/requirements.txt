@@ -4,11 +4,14 @@ alembic
 psycopg2-binary
 pydantic
 pydantic-settings
+pydantic[email]
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt==4.3.0
 python-multipart
 youtube-transcript-api
 openai
 anthropic
 python-dotenv
 httpx
+sqlalchemy
