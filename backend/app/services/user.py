@@ -71,7 +71,6 @@ class UserService(BaseService[User, UserRepository]):
         user = self.get_by_email(db, email)
         if not user:
             return None
-
         if not self.verify_password(password, user.hashed_password):
             return None
 

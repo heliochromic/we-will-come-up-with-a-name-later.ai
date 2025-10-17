@@ -74,7 +74,7 @@ def login(
     db: Session = Depends(get_db)
 ):
     user = user_service.authenticate_user(
-        db, form_data.username, form_data.password)
+        db, email=form_data.username, password=form_data.password)
 
     if not user:
         raise HTTPException(
