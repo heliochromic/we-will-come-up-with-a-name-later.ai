@@ -7,7 +7,7 @@ from app.core.database import SessionLocal
 from app.schemas.chat import ChatCreate, ChatResponse, MessageCreate, MessageResponse, LLMRequestSchema, LLMResponseSchema
 from app.schemas.user import UserResponse
 from app.services.chat import chat_service
-from app.services.llm import llm_service
+from app.services.llm_service import llm_service
 from app.api.routes.user import get_current_user
 
 router = APIRouter(prefix="/api/chats", tags=["chats"])
