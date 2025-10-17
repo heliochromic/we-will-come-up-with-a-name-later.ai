@@ -34,7 +34,7 @@ def created_transcript(auth_token):
     assert response.status_code == 201
     transcript = response.json()
     yield transcript
-    requests.delete(f"{BASE_URL}/api/transcripts/{transcript['transcript_id']}", headers=headers)
+    # requests.delete(f"{BASE_URL}/api/transcripts/{transcript['transcript_id']}", headers=headers)
 
 
 def test_create_transcript(auth_token):
@@ -75,7 +75,7 @@ def test_delete_transcript(auth_token):
     assert response.status_code == 201
     transcript_id = response.json()["transcript_id"]
 
-    response = requests.delete(f"{BASE_URL}/api/transcripts/{transcript_id}", headers=headers)
+    # response = requests.delete(f"{BASE_URL}/api/transcripts/{transcript_id}", headers=headers)
     assert response.status_code == 204
 
     response = requests.get(f"{BASE_URL}/api/transcripts/{transcript_id}", headers=headers)
