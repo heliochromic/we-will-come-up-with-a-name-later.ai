@@ -28,7 +28,7 @@ def create_transcript(
 ):
     try:
         transcript = transcript_service.get_transcript(db, transcript_data)
-        return TranscriptResponse.from_orm(transcript)
+        return TranscriptResponse.model_validate(transcript)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -55,7 +55,7 @@ def get_transcript_by_id(
             detail="Transcript not found"
         )
 
-    return TranscriptResponse.from_orm(transcript)
+    return TranscriptResponse.model_validate(transcript)
 
 
 @router.get("/", response_model=List[TranscriptResponse])
@@ -67,7 +67,7 @@ def get_all_transcripts(
 ):
     try:
         transcripts = transcript_service.get_all(db, skip=skip, limit=limit)
-        return [TranscriptResponse.from_orm(t) for t in transcripts]
+        return [TranscriptResponse.model_validate(t) for t in transcripts]
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

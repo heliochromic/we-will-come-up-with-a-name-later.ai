@@ -47,15 +47,15 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
 
-    return UserResponse.from_orm(user)
+    return UserResponse.model_validate(user)
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
-
+    print('register')
     try:
         user = user_service.create_user(db, user_data)
-        return UserResponse.from_orm(user)
+        return UserResponse.model_validate(user)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -88,7 +88,7 @@ def login(
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": UserResponse.from_orm(user)
+        "user": UserResponse.model_validate(user)
     }
 
 
@@ -111,7 +111,7 @@ def get_user_by_id(
             detail="User not found"
         )
 
-    return UserResponse.from_orm(user)
+    return UserResponse.model_validate(user)
 
 
 @router.put("/me", response_model=UserResponse)
@@ -132,7 +132,7 @@ def update_profile(
                 detail="User not found"
             )
 
-        return UserResponse.from_orm(updated_user)
+        return UserResponse.model_validate(updated_user)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -33,7 +33,7 @@ def create_chat(
             user_id=current_user.user_id,
             transcript_id=chat_data.transcript_id
         )
-        return ChatResponse.from_orm(chat)
+        return ChatResponse.model_validate(chat)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -53,7 +53,7 @@ def get_user_chats(
 ):
     try:
         chats = chat_service.get_by_user_id(db, current_user.user_id)
-        return [ChatResponse.from_orm(chat) for chat in chats]
+        return [ChatResponse.model_validate(chat) for chat in chats]
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -81,7 +81,7 @@ def get_chat(
             detail="Chat not found"
         )
 
-    return ChatResponse.from_orm(chat)
+    return ChatResponse.model_validate(chat)
 
 
 @router.post("/{chat_id}/messages", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
@@ -104,7 +104,7 @@ def add_message(
             sender=message_data.sender,
             message_text=message_data.message_text
         )
-        return MessageResponse.from_orm(message)
+        return MessageResponse.model_validate(message)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -137,7 +137,7 @@ def get_chat_messages(
             detail="Chat not found"
         )
 
-    return [MessageResponse.from_orm(msg) for msg in chat.messages]
+    return [MessageResponse.model_validate(msg) for msg in chat.messages]
 
 
 @router.delete("/{chat_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -176,7 +176,7 @@ def get_chats_by_transcript(
         chats = chat_service.get_chats_by_transcript(db, transcript_id)
         user_chats = [chat for chat in chats if chat.user_id ==
                       current_user.user_id]
-        return [ChatResponse.from_orm(chat) for chat in user_chats]
+        return [ChatResponse.model_validate(chat) for chat in user_chats]
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

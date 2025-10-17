@@ -1,7 +1,3 @@
-"""
-Database initialization module.
-Creates all tables and optionally seeds initial data.
-"""
 from sqlalchemy.orm import Session
 from app.core.database import engine, Base, SessionLocal
 from app.core.security import hash_password
