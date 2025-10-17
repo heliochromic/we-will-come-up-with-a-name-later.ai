@@ -1,3 +1,5 @@
+from html.parser import charref
+
 import pytest
 import requests
 from uuid import UUID
@@ -29,20 +31,20 @@ def created_transcript(auth_token):
     """Створюємо тестовий транскрипт перед тестами і видаляємо після"""
     headers = {"Authorization": f"Bearer {auth_token}"}
     payload = {
-        "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        "video_url": "https://www.youtube.com/watch?v=dJYGatp4SvA&list=PL5-TkQAfAZFbzxjBHtzdVCWE0Zbhomg7r&index=1&t=12s"
     }
     response = requests.post(f"{BASE_URL}/api/transcripts/", json=payload, headers=headers)
     assert response.status_code == 201
     transcript = response.json()
     yield transcript
-    requests.delete(f"{BASE_URL}/api/transcripts/{transcript['transcript_id']}", headers=headers)
+    # requests.delete(f"{BASE_URL}/api/transcripts/{transcript['transcript_id']}", headers=headers)
 
 @pytest.fixture
 def created_chat(auth_token, created_transcript):
     """Створюємо чат перед тестами і видаляємо після"""
     headers = {"Authorization": f"Bearer {auth_token}"}
     payload = {"transcript_id": created_transcript["transcript_id"]}
-    response = requests.post(f"{BASE_URL}/api/chats/", data=payload, headers=headers)
+    response = requests.post(f"{BASE_URL}/api/chats/", json=payload, headers=headers)
     assert response.status_code == 201
     chat = response.json()
     yield chat
@@ -52,7 +54,7 @@ def created_chat(auth_token, created_transcript):
 def test_create_chat(auth_token, created_transcript):
     headers = {"Authorization": f"Bearer {auth_token}"}
     payload = {"transcript_id": created_transcript["transcript_id"]}
-    response = requests.post(f"{BASE_URL}/api/chats/", data=payload, headers=headers)
+    response = requests.post(f"{BASE_URL}/api/chats/", json=payload, headers=headers)
     assert response.status_code == 201
     data = response.json()
     assert "chat_id" in data
@@ -81,8 +83,8 @@ def test_get_chat_by_id(auth_token, created_chat):
 def test_add_message(auth_token, created_chat):
     headers = {"Authorization": f"Bearer {auth_token}"}
     chat_id = created_chat["chat_id"]
-    payload = {"sender": "user", "message_text": "Hello, AI!"}
-    response = requests.post(f"{BASE_URL}/api/chats/{chat_id}/messages", data=payload, headers=headers)
+    payload = {"sender": "user", "message_text": "Hello, AI!", "chat_id": chat_id}
+    response = requests.post(f"{BASE_URL}/api/chats/{chat_id}/messages", json=payload, headers=headers)
     assert response.status_code == 201
     data = response.json()
     assert data["sender"] == "user"
@@ -103,8 +105,8 @@ def test_get_chat_messages(auth_token, created_chat):
 def test_send_message_to_llm(auth_token, created_chat):
     headers = {"Authorization": f"Bearer {auth_token}"}
     chat_id = created_chat["chat_id"]
-    payload = {"user_message": "Explain this video", "provider": "openai"}
-    response = requests.post(f"{BASE_URL}/api/chats/{chat_id}/llm", data=payload, headers=headers)
+    payload = {"user_message": "Explain this video", "provider": "claude", "chat_id": chat_id}
+    response = requests.post(f"{BASE_URL}/api/chats/{chat_id}/llm", json=payload, headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert data["chat_id"] == chat_id
