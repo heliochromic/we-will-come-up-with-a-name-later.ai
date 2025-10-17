@@ -105,7 +105,7 @@ def test_get_chat_messages(auth_token, created_chat):
 def test_send_message_to_llm(auth_token, created_chat):
     headers = {"Authorization": f"Bearer {auth_token}"}
     chat_id = created_chat["chat_id"]
-    payload = {"user_message": "Explain this video", "provider": "claude", "chat_id": chat_id}
+    payload = {"user_message": "Explain this video", "provider": "openai", "chat_id": chat_id}
     response = requests.post(f"{BASE_URL}/api/chats/{chat_id}/llm", json=payload, headers=headers)
     assert response.status_code == 200
     data = response.json()
