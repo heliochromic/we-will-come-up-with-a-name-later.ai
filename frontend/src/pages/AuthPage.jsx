@@ -1,17 +1,34 @@
 import { useState } from 'react';
 import { FileText } from 'lucide-react';
+import { login, register } from '../api/auth';
 
 export default function AuthPage({ onAuth }) {
   const [isLogin, setIsLogin] = useState(true);
   const [authForm, setAuthForm] = useState({ email: '', password: '', name: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleAuth = (e) => {
+  const handleAuth = async (e) => {
     e.preventDefault();
-    const userData = {
-      email: authForm.email,
-      name: isLogin ? authForm.email.split('@')[0] : authForm.name
-    };
-    onAuth(userData);
+    setError('');
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        await login(authForm.email, authForm.password);
+      } else {
+        await register(authForm.email, authForm.password, authForm.name);
+      }
+      const userData = {
+        email: authForm.email,
+        name: isLogin ? authForm.email.split('@')[0] : authForm.name
+      };
+      onAuth(userData);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,11 +86,16 @@ export default function AuthPage({ onAuth }) {
             />
           </div>
 
+          {error && (
+            <div className="text-red-600 text-sm">{error}</div>
+          )}
+
           <button
             onClick={handleAuth}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLogin ? 'Sign In' : 'Sign Up'}
+            {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Sign Up')}
           </button>
         </div>
 

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Send, Youtube, User, Bot, Loader2 } from "lucide-react";
+import { createTranscript } from "../api/transcripts";
+import { createChat, sendMessageToLLM } from "../api/chats";
 
 export default function MainPage({ user, onNavigateToProfile }) {
   const [videoUrl, setVideoUrl] = useState("");
@@ -7,17 +9,22 @@ export default function MainPage({ user, onNavigateToProfile }) {
   const [chatStarted, setChatStarted] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [currentChatId, setCurrentChatId] = useState(null);
+  const [error, setError] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
-  // --- Симуляція завантаження транскрипту ---
   const handleLoadVideo = async (e) => {
     e.preventDefault();
     if (!videoUrl.trim()) return;
 
     setIsLoadingTranscript(true);
     setChatStarted(false);
+    setError("");
 
-    // Симулюємо запит до backend
-    setTimeout(() => {
+    try {
+      const transcript = await createTranscript(videoUrl);
+      const chat = await createChat(transcript.id, `Chat about ${videoUrl}`);
+      setCurrentChatId(chat.id);
       setIsLoadingTranscript(false);
       setChatStarted(true);
       setMessages([
@@ -26,24 +33,35 @@ export default function MainPage({ user, onNavigateToProfile }) {
           text: `✅ Транскрипт відео "${videoUrl}" завантажено. Можете ставити запитання про зміст.`,
         },
       ]);
-    }, 2000);
+    } catch (err) {
+      setError(err.message);
+      setIsLoadingTranscript(false);
+    }
   };
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !currentChatId || isSending) return;
 
-    const newMessage = { sender: "user", text: input };
-    setMessages((prev) => [...prev, newMessage]);
+    const userMessage = { sender: "user", text: input };
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    setIsSending(true);
 
-    // Симуляція відповіді бота
-    setTimeout(() => {
+    try {
+      const response = await sendMessageToLLM(currentChatId, input);
       setMessages((prev) => [
         ...prev,
-        { sender: "bot", text: `🤖 Цікава думка! Ви запитали: "${input}".` },
+        { sender: "bot", text: response.response },
       ]);
-    }, 800);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: `Error: ${err.message}` },
+      ]);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -78,6 +96,10 @@ export default function MainPage({ user, onNavigateToProfile }) {
               Після аналізу транскрипту ви зможете ставити запитання про зміст
               відео у форматі чату.
             </p>
+
+            {error && (
+              <div className="mb-4 text-red-600 text-sm">{error}</div>
+            )}
 
             <form onSubmit={handleLoadVideo} className="flex gap-3">
               <input
@@ -145,13 +167,19 @@ export default function MainPage({ user, onNavigateToProfile }) {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Напишіть запитання..."
-                className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isSending}
+                className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
               />
               <button
                 type="submit"
-                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                disabled={isSending}
+                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
-                <Send className="w-5 h-5" />
+                {isSending ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Send className="w-5 h-5" />
+                )}
               </button>
             </form>
           </div>

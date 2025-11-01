@@ -1,18 +1,37 @@
-                      import { useState } from 'react';
+import { useState } from 'react';
 import { LogOut, FileText, ArrowLeft } from 'lucide-react';
+import { updateUser } from '../api/users';
+import { logout } from '../api/auth';
 
 export default function ProfilePage({ user, onLogout, onNavigateBack, onUpdateUser }) {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ name: user?.name || '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSaveProfile = () => {
-    onUpdateUser({ ...user, name: profileForm.name });
-    setIsEditingProfile(false);
+  const handleSaveProfile = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await updateUser({ full_name: profileForm.name });
+      onUpdateUser({ ...user, name: profileForm.name });
+      setIsEditingProfile(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
     setIsEditingProfile(false);
     setProfileForm({ name: user?.name || '' });
+    setError('');
+  };
+
+  const handleLogout = () => {
+    logout();
+    onLogout();
   };
 
   return (
@@ -80,18 +99,24 @@ export default function ProfilePage({ user, onLogout, onNavigateBack, onUpdateUs
                 </div>
               </div>
 
+              {error && (
+                <div className="text-red-600 text-sm mb-4">{error}</div>
+              )}
+
               <div className="flex space-x-4 mt-6">
                 {isEditingProfile ? (
                   <>
                     <button
                       onClick={handleSaveProfile}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      disabled={loading}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                     >
-                      Save Changes
+                      {loading ? 'Saving...' : 'Save Changes'}
                     </button>
                     <button
                       onClick={handleCancel}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                      disabled={loading}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
                     >
                       Cancel
                     </button>
@@ -109,7 +134,7 @@ export default function ProfilePage({ user, onLogout, onNavigateBack, onUpdateUs
 
             <div className="border-t border-gray-200 pt-6">
               <button
-                onClick={onLogout}
+                onClick={handleLogout}
                 className="flex items-center text-red-600 hover:text-red-700 font-medium"
               >
                 <LogOut className="w-5 h-5 mr-2" />
