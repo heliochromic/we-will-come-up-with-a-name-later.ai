@@ -52,7 +52,7 @@ async def get_current_user(
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
-    print('register')
+    print(user_data)
     try:
         user = user_service.create_user(db, user_data)
         return UserResponse.model_validate(user)

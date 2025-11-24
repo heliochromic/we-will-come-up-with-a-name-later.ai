@@ -8,6 +8,7 @@ from app.schemas.chat import ChatCreate, ChatResponse, MessageCreate, MessageRes
 from app.schemas.user import UserResponse
 from app.services.chat import chat_service
 from app.services.llm_service import llm_service
+from app.services.youtube import transcript_service
 from app.api.routes.user import get_current_user
 
 router = APIRouter(prefix="/api/chats", tags=["chats"])
@@ -214,7 +215,20 @@ async def send_message_to_llm(
             message_text=request.user_message
         )
 
-        system_prompt = "You are a helpful AI assistant that helps users understand and discuss content from YouTube videos. Be concise, informative, and friendly."
+        transcript = None
+        if chat.transcript_id:
+            transcript = transcript_service.get_by_id(db, chat.transcript_id)
+
+        if transcript and transcript.transcript_text:
+            system_prompt = f"""You are a helpful AI assistant that helps users understand and discuss content from YouTube videos. Be concise, informative, and friendly.
+
+Here is the transcript of the video being discussed:
+
+{transcript.transcript_text}
+
+Use this transcript to answer the user's questions accurately and provide relevant information from the video content."""
+        else:
+            system_prompt = "You are a helpful AI assistant that helps users understand and discuss content from YouTube videos. Be concise, informative, and friendly."
 
         messages = llm_service.format_chat_history(
             chat_messages=chat.messages,
@@ -240,11 +254,15 @@ async def send_message_to_llm(
         )
 
     except ValueError as e:
+        print(f"ValueError in LLM endpoint: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
     except Exception as e:
+        print(f"Exception in LLM endpoint: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while processing LLM request: {str(e)}"

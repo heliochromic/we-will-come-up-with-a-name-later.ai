@@ -17,7 +17,6 @@ class UserCreate(UserBase):
     password: str
 
 
-
 class UserResponse(UserBase):
     user_id: UUID
     is_admin: bool

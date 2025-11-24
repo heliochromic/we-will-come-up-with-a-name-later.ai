@@ -1,17 +1,38 @@
 import { useState } from 'react';
-import { FileText } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
+import { authAPI } from '../services/api';
 
 export default function AuthPage({ onAuth }) {
   const [isLogin, setIsLogin] = useState(true);
   const [authForm, setAuthForm] = useState({ email: '', password: '', name: '' });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleAuth = (e) => {
+  const handleAuth = async (e) => {
     e.preventDefault();
-    const userData = {
-      email: authForm.email,
-      name: isLogin ? authForm.email.split('@')[0] : authForm.name
-    };
-    onAuth(userData);
+    setError('');
+    setIsLoading(true);
+
+    try {
+      if (isLogin) {
+        const data = await authAPI.login(authForm.email, authForm.password);
+        localStorage.setItem('access_token', data.access_token);
+        onAuth(data.user);
+      } else {
+        await authAPI.register({
+          email: authForm.email,
+          password: authForm.password,
+          name: authForm.name
+        });
+        const loginData = await authAPI.login(authForm.email, authForm.password);
+        localStorage.setItem('access_token', loginData.access_token);
+        onAuth(loginData.user);
+      }
+    } catch (err) {
+      setError(err.message || 'Authentication failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -27,7 +48,13 @@ export default function AuthPage({ onAuth }) {
           </p>
         </div>
 
-        <div className="space-y-4">
+        <form onSubmit={handleAuth} className="space-y-4">
+          {error && (
+            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
           {!isLogin && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -35,9 +62,10 @@ export default function AuthPage({ onAuth }) {
               </label>
               <input
                 type="text"
+                required={!isLogin}
                 value={authForm.name}
                 onChange={(e) => setAuthForm({ ...authForm, name: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 placeholder="John Doe"
               />
             </div>
@@ -49,9 +77,10 @@ export default function AuthPage({ onAuth }) {
             </label>
             <input
               type="email"
+              required
               value={authForm.email}
               onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               placeholder="you@example.com"
             />
           </div>
@@ -62,25 +91,34 @@ export default function AuthPage({ onAuth }) {
             </label>
             <input
               type="password"
+              required
               value={authForm.password}
               onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               placeholder="••••••••"
             />
           </div>
 
           <button
-            onClick={handleAuth}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            {isLogin ? 'Sign In' : 'Sign Up'}
+            {isLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                {isLogin ? 'Signing in...' : 'Signing up...'}
+              </>
+            ) : (
+              isLogin ? 'Sign In' : 'Sign Up'
+            )}
           </button>
-        </div>
+        </form>
 
         <div className="mt-6 text-center">
           <button
             onClick={() => setIsLogin(!isLogin)}
-            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+            className="w-full text-blue-600 hover:text-blue-700 text-sm font-medium"
           >
             {isLogin
               ? "Don't have an account? Sign up"

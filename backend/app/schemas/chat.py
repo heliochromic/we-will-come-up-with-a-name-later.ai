@@ -38,8 +38,8 @@ class ChatResponse(ChatBase):
 
 
 class LLMRequestSchema(BaseModel):
-    chat_id: UUID
     user_message: str
+    provider: str = "claude"
 
 
 class LLMResponseSchema(BaseModel):

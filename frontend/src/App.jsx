@@ -13,6 +13,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('access_token');
     setUser(null);
     setCurrentPage('login');
   };
