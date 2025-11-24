@@ -76,7 +76,7 @@ class LLMService:
                     })
 
             request_params = {
-                "model": "claude-3-5-sonnet-20241022",
+                "model": "claude-3-5-haiku-20241022",
                 "max_tokens": max_tokens,
                 "temperature": temperature,
                 "messages": claude_messages

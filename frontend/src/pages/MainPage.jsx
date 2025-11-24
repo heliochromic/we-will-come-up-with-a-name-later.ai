@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Send, Youtube, User, Bot, Loader2 } from "lucide-react";
-import { createTranscript } from "../api/transcripts";
-import { createChat, sendMessageToLLM } from "../api/chats";
+import { Send, Video, User, Bot, Loader2, AlertCircle } from "lucide-react";
+import { transcriptAPI, chatAPI } from "../services/api";
 
 export default function MainPage({ user, onNavigateToProfile }) {
   const [videoUrl, setVideoUrl] = useState("");
@@ -9,32 +8,36 @@ export default function MainPage({ user, onNavigateToProfile }) {
   const [chatStarted, setChatStarted] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [currentChatId, setCurrentChatId] = useState(null);
-  const [error, setError] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState("");
+  const [currentChatId, setCurrentChatId] = useState(null);
+  const [currentTranscriptId, setCurrentTranscriptId] = useState(null);
 
   const handleLoadVideo = async (e) => {
     e.preventDefault();
     if (!videoUrl.trim()) return;
 
     setIsLoadingTranscript(true);
-    setChatStarted(false);
     setError("");
+    setChatStarted(false);
 
     try {
-      const transcript = await createTranscript(videoUrl);
-      const chat = await createChat(transcript.id, `Chat about ${videoUrl}`);
-      setCurrentChatId(chat.id);
-      setIsLoadingTranscript(false);
+      const transcript = await transcriptAPI.create(videoUrl);
+      setCurrentTranscriptId(transcript.transcript_id);
+
+      const chat = await chatAPI.create(transcript.transcript_id);
+      setCurrentChatId(chat.chat_id);
+
       setChatStarted(true);
       setMessages([
         {
           sender: "bot",
-          text: `✅ Транскрипт відео "${videoUrl}" завантажено. Можете ставити запитання про зміст.`,
+          text: `Transcript loaded successfully! You can now ask questions about the video content.`,
         },
       ]);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Failed to load video transcript");
+    } finally {
       setIsLoadingTranscript(false);
     }
   };
@@ -43,21 +46,23 @@ export default function MainPage({ user, onNavigateToProfile }) {
     e.preventDefault();
     if (!input.trim() || !currentChatId || isSending) return;
 
-    const userMessage = { sender: "user", text: input };
-    setMessages((prev) => [...prev, userMessage]);
+    const userMessage = input;
     setInput("");
+    setMessages((prev) => [...prev, { sender: "user", text: userMessage }]);
     setIsSending(true);
+    setError("");
 
     try {
-      const response = await sendMessageToLLM(currentChatId, input);
+      const response = await chatAPI.sendMessage(currentChatId, userMessage);
       setMessages((prev) => [
         ...prev,
-        { sender: "bot", text: response.response },
+        { sender: "bot", text: response.llm_message },
       ]);
     } catch (err) {
+      setError(err.message || "Failed to send message");
       setMessages((prev) => [
         ...prev,
-        { sender: "bot", text: `Error: ${err.message}` },
+        { sender: "bot", text: "Sorry, I encountered an error. Please try again." },
       ]);
     } finally {
       setIsSending(false);
@@ -70,7 +75,7 @@ export default function MainPage({ user, onNavigateToProfile }) {
       <nav className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 h-16 flex justify-between items-center">
           <div className="flex items-center">
-            <Youtube className="w-7 h-7 text-red-500" />
+            <Video className="w-7 h-7 text-red-500" />
             <span className="ml-2 font-semibold text-gray-900 text-lg">
               Video RAG Chat
             </span>
@@ -90,15 +95,17 @@ export default function MainPage({ user, onNavigateToProfile }) {
         {!chatStarted ? (
           <div className="w-full max-w-xl bg-white p-8 rounded-2xl shadow-md text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-3">
-              Введіть посилання на відео
+              Enter Video URL
             </h1>
             <p className="text-gray-600 mb-6">
-              Після аналізу транскрипту ви зможете ставити запитання про зміст
-              відео у форматі чату.
+              After analyzing the transcript, you can ask questions about the video content in chat format.
             </p>
 
             {error && (
-              <div className="mb-4 text-red-600 text-sm">{error}</div>
+              <div className="mb-4 bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 mr-2" />
+                {error}
+              </div>
             )}
 
             <form onSubmit={handleLoadVideo} className="flex gap-3">
@@ -108,17 +115,17 @@ export default function MainPage({ user, onNavigateToProfile }) {
                 placeholder="https://www.youtube.com/watch?v=..."
                 value={videoUrl}
                 onChange={(e) => setVideoUrl(e.target.value)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-transparent text-gray-900"
               />
               <button
                 type="submit"
                 disabled={isLoadingTranscript}
-                className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center disabled:opacity-50"
+                className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoadingTranscript ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  "Завантажити"
+                  "Load"
                 )}
               </button>
             </form>
@@ -166,14 +173,14 @@ export default function MainPage({ user, onNavigateToProfile }) {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Напишіть запитання..."
+                placeholder="Ask a question..."
                 disabled={isSending}
-                className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <button
                 type="submit"
                 disabled={isSending}
-                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSending ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
